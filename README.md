@@ -1,244 +1,210 @@
 # Distributed Real-Time Leaderboard System
 
-## Overview
-
-This project implements a **Distributed Real-Time Leaderboard System** using a **client–server architecture**. Multiple clients can send score updates to a centralized server simultaneously. The server processes these updates concurrently and stores the rankings in **Redis**, which maintains a sorted leaderboard.
-
-The system demonstrates key distributed system concepts such as **concurrent connections, real-time updates, and efficient ranking management**.
-
----
+A real-time distributed leaderboard system inspired by [HotlapDaily.com](https://hotlapdaily.com), demonstrating core Computer Networks concepts through a practical racing game application.
 
 ## Features
 
-* **Real-time leaderboard updates**
-* **Concurrent client connections using multithreading**
-* **High-performance leaderboard storage using Redis Sorted Sets**
-* **Automatic ranking updates**
-* **Simulated load testing with multiple clients**
-* **Live leaderboard display in client terminals**
+- **Real-time leaderboard updates** across all connected clients
+- **Dual protocol support**: TCP (terminal) + WebSocket (browser)
+- **Web-based racing game** with live leaderboard
+- **Concurrent client handling** using multithreading
+- **Redis-powered** high-performance ranking system
+- **LAN demo ready** for multi-device presentations
 
----
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Start Redis Server
+
+```bash
+redis-server
+```
+
+### 3. Start the Leaderboard Server
+
+```bash
+python main.py
+```
+
+You should see:
+```
+=================================================================
+           DISTRIBUTED LEADERBOARD SERVER
+=================================================================
+[HH:MM:SS] Server started
+[HH:MM:SS] TCP Server:       0.0.0.0:5000
+[HH:MM:SS] WebSocket Server: 0.0.0.0:8765
+[HH:MM:SS] HTTP Server:      0.0.0.0:8080
+[HH:MM:SS] Redis:            localhost:6379
+-----------------------------------------------------------------
+[HH:MM:SS] Waiting for connections...
+```
+
+### 4. Play the Game
+
+**Browser (Recommended):**
+- Open http://localhost:8080
+- Enter your name
+- Press SPACE to start racing
+- Use arrow keys to drive
+
+**Terminal Client:**
+```bash
+python client.py
+```
 
 ## System Architecture
 
-The system follows a **client-server architecture** with Redis as the database.
-
 ```
-Clients
-   │
-   │ TCP Socket Connections
-   ▼
-Multithreaded Python Server
-   │
-   │ Redis Commands (ZADD, ZRANGE)
-   ▼
-Redis Database (Sorted Set Leaderboard)
-   │
-   ▼
-Updated Leaderboard Broadcast to Clients
+┌─────────────────────────────────────────────────────────────────┐
+│                    SYSTEM ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌──────────────┐                     ┌──────────────┐         │
+│   │   Browser    │                     │   Terminal   │         │
+│   │  (Game UI)   │                     │   Client     │         │
+│   └──────┬───────┘                     └──────┬───────┘         │
+│          │                                    │                 │
+│          │ WebSocket                          │ TCP Socket      │
+│          │ (port 8765)                        │ (port 5000)     │
+│          │                                    │                 │
+│          └──────────────┬─────────────────────┘                 │
+│                         │                                       │
+│              ┌──────────▼──────────┐                            │
+│              │   Python Server     │                            │
+│              │     (main.py)       │                            │
+│              └──────────┬──────────┘                            │
+│                         │                                       │
+│              ┌──────────▼──────────┐                            │
+│              │       Redis         │                            │
+│              │   (Sorted Sets)     │                            │
+│              └─────────────────────┘                            │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
----
 
 ## Project Structure
 
 ```
-leaderboard_project/
+distributed-leaderboard-system/
+├── main.py                 # Unified server entry point
+├── config.py               # Configuration settings
+├── client.py               # Terminal TCP client
+├── requirements.txt        # Python dependencies
 │
-├── server.py        # Multithreaded TCP server
-├── client.py        # Manual client for testing
-├── redis_db.py      # Redis database operations
-├── load_test.py     # Simulates multiple players
-└── README.md
+├── server/                 # Server modules
+│   ├── __init__.py
+│   ├── tcp_handler.py      # TCP socket server
+│   ├── ws_handler.py       # WebSocket server
+│   ├── shared.py           # Shared state & broadcasting
+│   └── redis_db.py         # Redis operations
+│
+├── web/                    # Web frontend
+│   ├── index.html          # Game + leaderboard UI
+│   ├── css/
+│   │   └── style.css       # Dark theme styling
+│   └── js/
+│       ├── game.js         # Racing game logic
+│       ├── websocket.js    # WebSocket client
+│       └── leaderboard.js  # Leaderboard display
+│
+├── docs/
+│   └── CN_CONCEPTS.md      # Viva documentation
+│
+└── legacy/                 # Original files (for reference)
+    ├── server.py
+    ├── redis_db.py
+    └── load_test.py
 ```
 
----
+## Computer Networks Concepts Demonstrated
+
+| Concept | Implementation |
+|---------|----------------|
+| **TCP Socket Programming** | Raw socket server for terminal clients |
+| **WebSocket Protocol** | Browser-compatible real-time communication |
+| **Client-Server Architecture** | Centralized server handling multiple clients |
+| **Multithreading** | Concurrent client handling with threading |
+| **Broadcasting** | Real-time updates to all connected clients |
+| **Protocol Design** | Custom message formats (text + JSON) |
+| **LAN Communication** | WiFi hotspot demo deployment |
+
+## Running the LAN Demo
+
+### Server Laptop
+
+1. Create a WiFi hotspot
+2. Note the IP address (usually `192.168.137.1` on Windows)
+3. Update `config.py`:
+   ```python
+   HOST = "0.0.0.0"  # Listen on all interfaces
+   ```
+4. Run `python main.py`
+
+### Client Devices
+
+Connect to the hotspot, then:
+
+**Browser:** Open `http://192.168.137.1:8080`
+
+**Terminal:**
+```bash
+python client.py 192.168.137.1
+```
 
 ## Technologies Used
 
-| Component            | Technology             |
-| -------------------- | ---------------------- |
-| Programming Language | Python                 |
-| Networking           | TCP Socket Programming |
-| Concurrency          | Multithreading         |
-| Database             | Redis                  |
-| Data Structure       | Redis Sorted Sets      |
+| Component | Technology |
+|-----------|------------|
+| Server Language | Python 3.8+ |
+| TCP Server | `socket` module |
+| WebSocket Server | `websockets` library |
+| Database | Redis (Sorted Sets) |
+| Frontend | HTML5 Canvas, JavaScript |
+| Styling | CSS3 (Dark theme) |
 
----
+## Server Logs
 
-## Why Redis?
-
-Redis is used because it provides **fast in-memory data structures** and supports **Sorted Sets**, which are ideal for leaderboard systems.
-
-Advantages:
-
-* **Automatic ranking** of players
-* **Atomic updates** (no race conditions)
-* **High throughput** for frequent score updates
-* **Efficient retrieval of top players**
-
-Example Redis commands used:
+The server provides detailed logging for demo purposes:
 
 ```
-ZADD leaderboard score username
-ZRANGE leaderboard 0 9 WITHSCORES
+[10:23:45] [TCP ] Connected: LAPTOP-SHRIKAR (192.168.137.2:54321)
+[10:23:47] [WS  ] Connected: DESKTOP-SUJAL (192.168.137.3)
+[10:23:50] [TCP ] Score from LAPTOP-SHRIKAR: player1 = 9.300s
+[10:23:50] [--> ] Broadcasting to 2 clients (TCP: 1, WS: 1)
 ```
 
----
+## Game Controls
 
-## Installation
-
-### 1. Install Python Dependencies
-
-```
-pip install redis
-```
-
-### 2. Install Redis
-
-Download Redis for Windows from:
-
-https://github.com/tporadowski/redis/releases
-
-Extract and run:
-
-```
-redis-server.exe
-```
-
-You should see:
-
-```
-Ready to accept connections
-```
-
----
-
-## How to Run the Project
-
-### Step 1: Start Redis Server
-
-```
-redis-server
-```
-
----
-
-### Step 2: Start the Leaderboard Server
-
-```
-python server.py
-```
-
-Expected output:
-
-```
-Server started...
-Listening on 127.0.0.1:5000
-```
-
----
-
-### Step 3: Run Manual Client
-
-```
-python client.py
-```
-
-Example input:
-
-```
-Enter username: alex
-Enter lap time: 90
-```
-
----
-
-### Step 4: Simulate Multiple Players
-
-To simulate many players sending scores simultaneously:
-
-```
-python load_test.py
-```
-
-This creates **multiple concurrent clients** that continuously update scores.
-
----
-
-## Checking Data in Redis
-
-Open Redis CLI:
-
-```
-redis-cli
-```
-
-View leaderboard:
-
-```
-ZRANGE leaderboard 0 -1 WITHSCORES
-```
-
-Example output:
-
-```
-player19 70
-player23 70
-player26 71
-player54 72
-```
-
----
-
-## Workflow
-
-1. Client connects to server using TCP.
-2. Client sends score update in format `username#score`.
-3. Server receives the update and processes it in a separate thread.
-4. Server updates the leaderboard stored in Redis.
-5. Redis maintains the sorted ranking.
-6. Server retrieves the updated leaderboard.
-7. Server broadcasts the leaderboard to all connected clients.
-
----
-
-## Example Output
-
-```
-🏁 LIVE LEADERBOARD
-
-1. player19 - 70
-2. player23 - 70
-3. player33 - 71
-4. player54 - 72
-5. player10 - 73
-```
-
----
+| Key | Action |
+|-----|--------|
+| ↑ (Up Arrow) | Accelerate |
+| ← (Left Arrow) | Turn left |
+| → (Right Arrow) | Turn right |
+| Space | Start race |
 
 ## Future Improvements
 
-* Web-based leaderboard dashboard
-* Redis Pub/Sub for real-time notifications
-* Authentication for players
-* Horizontal scaling using multiple servers
-* Persistent storage for long-term score history
+- [ ] Redis Pub/Sub for push notifications
+- [ ] Player authentication
+- [ ] Historical lap records
+- [ ] Multiple track support
+- [ ] Replay system
 
----
+## Documentation
 
-## Learning Outcomes
+For detailed explanation of Computer Networks concepts, see:
+- [docs/CN_CONCEPTS.md](docs/CN_CONCEPTS.md) - Viva preparation guide
 
-This project demonstrates:
+## Authors
 
-* Socket programming using TCP
-* Multithreaded server architecture
-* Concurrent client handling
-* Redis database integration
-* Real-time leaderboard systems used in multiplayer games
+Computer Networks Mini Project  
+**Shrikar Desai** | **Sujal Sachin Yadavi** | **Shreyas P Kulkarni**
 
----
+## License
 
-## Author
-
-Developed as part of a **Computer Networks / Distributed Systems mini project**.
+This project is for educational purposes.

@@ -1,0 +1,506 @@
+/* 
+ * HotLap Daily - Distributed Leaderboard System
+ * Dark theme inspired by HotlapDaily.com
+ */
+
+/* ============================================
+   CSS Variables
+   ============================================ */
+:root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-panel: #1a1a24;
+    --bg-input: #0d0d12;
+    
+    --border-color: #2a2a3a;
+    --border-glow: #ff3366;
+    --border-accent: #4a4a5a;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #888899;
+    --text-accent: #ff3366;
+    --text-success: #00ff88;
+    --text-warning: #ffaa00;
+    
+    --accent-red: #ff3366;
+    --accent-cyan: #00ffff;
+    --accent-green: #00ff88;
+    --accent-yellow: #ffff00;
+    
+    --font-pixel: 'Press Start 2P', cursive;
+    --font-tech: 'Orbitron', sans-serif;
+}
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-tech);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+}
+
+/* ============================================
+   Layout Container
+   ============================================ */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.title {
+    font-family: var(--font-pixel);
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    text-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+    letter-spacing: 4px;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    letter-spacing: 2px;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+    font-size: 0.75rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.connected {
+    background-color: var(--accent-green);
+    box-shadow: 0 0 10px var(--accent-green);
+}
+
+.status-dot.disconnected {
+    background-color: var(--accent-red);
+    box-shadow: 0 0 10px var(--accent-red);
+}
+
+.status-text {
+    color: var(--text-secondary);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ============================================
+   Main Content Layout
+   ============================================ */
+.main-content {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 20px;
+    flex: 1;
+}
+
+/* ============================================
+   Left Panel - Controls
+   ============================================ */
+.left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.control-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--font-tech);
+    font-size: 0.9rem;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: var(--accent-red);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+}
+
+.start-button {
+    width: 100%;
+    padding: 15px;
+    background: transparent;
+    border: 2px solid var(--accent-red);
+    border-radius: 4px;
+    color: var(--accent-red);
+    font-family: var(--font-pixel);
+    font-size: 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: borderGlow 2s infinite;
+}
+
+.start-button:hover {
+    background: var(--accent-red);
+    color: var(--bg-primary);
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.5);
+}
+
+.start-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    animation: none;
+}
+
+@keyframes borderGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 51, 102, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.8); }
+}
+
+/* Controls Display */
+.controls-display {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.control-key {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.key {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-accent);
+    border-radius: 4px;
+    font-size: 1.2rem;
+    background: var(--bg-input);
+}
+
+.key-label {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+}
+
+/* Best Time Display */
+.best-time-display {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.best-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+}
+
+.best-value {
+    font-family: var(--font-pixel);
+    font-size: 1.2rem;
+    color: var(--accent-cyan);
+    margin: 10px 0;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.previous-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   Center Panel - Game Canvas
+   ============================================ */
+.center-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-container {
+    position: relative;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+#gameCanvas {
+    display: block;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.timer-display {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-pixel);
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 25px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.lap-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    color: var(--accent-green);
+    text-shadow: 0 0 20px var(--accent-green);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    text-align: center;
+    pointer-events: none;
+}
+
+.lap-message.show {
+    opacity: 1;
+}
+
+/* ============================================
+   Right Panel - Leaderboard
+   ============================================ */
+.right-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.leaderboard-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px;
+    height: 100%;
+}
+
+.leaderboard-title {
+    font-family: var(--font-pixel);
+    font-size: 0.7rem;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+}
+
+.leaderboard-info {
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.rank-display {
+    font-size: 0.8rem;
+    color: var(--accent-cyan);
+}
+
+.leaderboard-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.leaderboard-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding: 40px 0;
+}
+
+.leaderboard-entry {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 5px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.leaderboard-entry:hover {
+    border-color: var(--border-accent);
+}
+
+.leaderboard-entry.current-player {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.leaderboard-entry.top-3 {
+    border-color: var(--accent-yellow);
+}
+
+.entry-rank {
+    width: 30px;
+    font-family: var(--font-pixel);
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.entry-rank.gold { color: #ffd700; }
+.entry-rank.silver { color: #c0c0c0; }
+.entry-rank.bronze { color: #cd7f32; }
+
+.entry-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry-time {
+    font-family: var(--font-tech);
+    font-size: 0.85rem;
+    color: var(--accent-green);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+    margin-top: 20px;
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-info {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.separator {
+    margin: 0 10px;
+    color: var(--border-accent);
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-input);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-accent);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 250px 1fr 250px;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .left-panel {
+        order: 1;
+    }
+    
+    .center-panel {
+        order: 2;
+    }
+    
+    .right-panel {
+        order: 3;
+    }
+    
+    #gameCanvas {
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+    }
+}

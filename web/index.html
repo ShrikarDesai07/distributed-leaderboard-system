@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotLap Daily - Distributed Leaderboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">HOTLAP DAILY</h1>
+            <p class="subtitle">go flatout to set today's laptime</p>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot disconnected"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel - Controls -->
+            <div class="left-panel">
+                <div class="control-panel">
+                    <!-- Name Input -->
+                    <div class="input-group">
+                        <label for="playerName">NAME</label>
+                        <input type="text" id="playerName" placeholder="Enter your name" maxlength="15">
+                    </div>
+
+                    <!-- Team Selection -->
+                    <div class="input-group">
+                        <label for="teamSelect">CONSTRUCTOR</label>
+                        <select id="teamSelect">
+                            <option value="Red Racing">Red Racing</option>
+                            <option value="Silver Arrows">Silver Arrows</option>
+                            <option value="Blue Bulls">Blue Bulls</option>
+                            <option value="Green Machine">Green Machine</option>
+                            <option value="Orange Army">Orange Army</option>
+                        </select>
+                    </div>
+
+                    <!-- Start Button -->
+                    <button class="start-button" id="startButton">
+                        PRESS SPACE OR CLICK TO BEGIN
+                    </button>
+
+                    <!-- Controls Display -->
+                    <div class="controls-display">
+                        <div class="control-key">
+                            <span class="key">&#8592;</span>
+                            <span class="key-label">LEFT</span>
+                        </div>
+                        <div class="control-key">
+                            <span class="key">&#8593;</span>
+                            <span class="key-label">GAS</span>
+                        </div>
+                        <div class="control-key">
+                            <span class="key">&#8594;</span>
+                            <span class="key-label">RIGHT</span>
+                        </div>
+                    </div>
+
+                    <!-- Best Time Display -->
+                    <div class="best-time-display" id="bestTimeDisplay">
+                        <div class="best-label">YOUR BEST</div>
+                        <div class="best-value" id="personalBest">--:--</div>
+                        <div class="previous-label">Previous: <span id="previousTime">--:--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Game Canvas -->
+            <div class="center-panel">
+                <div class="game-container">
+                    <canvas id="gameCanvas" width="600" height="500"></canvas>
+                    <div class="timer-display" id="timerDisplay">0.000</div>
+                    <div class="lap-message" id="lapMessage"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Leaderboard -->
+            <div class="right-panel">
+                <div class="leaderboard-panel">
+                    <h2 class="leaderboard-title">LIVE LEADERBOARD</h2>
+                    <div class="leaderboard-info">
+                        <span class="rank-display" id="yourRank">Rank: --</span>
+                    </div>
+                    <div class="leaderboard-list" id="leaderboardList">
+                        <div class="leaderboard-empty">
+                            Waiting for players...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-info">
+                <span>Computer Networks Mini Project</span>
+                <span class="separator">|</span>
+                <span>TCP + WebSocket</span>
+                <span class="separator">|</span>
+                <span id="clientCount">Clients: 0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/websocket.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Requirements for Distributed Leaderboard System
+
+# Redis client
+redis>=4.0.0
+
+# WebSocket server
+websockets>=10.0
