@@ -48,7 +48,7 @@ const GAME_CONFIG = {
 // =============================================================================
 
 let canvas, ctx;
-let gameState = 'waiting'; // waiting, countdown, racing, dnf
+let gameState = 'waiting'; // waiting, racing, dnf
 let car = null;
 let track = null;
 let timer = 0;
@@ -146,15 +146,18 @@ class Car {
     }
     
     update(deltaTime) {
+        // Frame-rate independent multiplier (normalize to 60 FPS)
+        const dt = deltaTime * 60;
+        
         // Handle acceleration
         if (keys.up) {
-            this.speed += GAME_CONFIG.ACCELERATION;
+            this.speed += GAME_CONFIG.ACCELERATION * dt;
         } else {
-            this.speed -= GAME_CONFIG.DECELERATION;
+            this.speed -= GAME_CONFIG.DECELERATION * dt;
         }
         
         // Apply friction
-        this.speed -= GAME_CONFIG.FRICTION;
+        this.speed -= GAME_CONFIG.FRICTION * dt;
         
         // Clamp speed
         this.speed = Math.max(0, Math.min(GAME_CONFIG.MAX_SPEED, this.speed));
@@ -162,16 +165,16 @@ class Car {
         // Handle turning (only when moving)
         if (this.speed > 0.1) {
             if (keys.left) {
-                this.angle -= GAME_CONFIG.TURN_SPEED * (this.speed / GAME_CONFIG.MAX_SPEED);
+                this.angle -= GAME_CONFIG.TURN_SPEED * (this.speed / GAME_CONFIG.MAX_SPEED) * dt;
             }
             if (keys.right) {
-                this.angle += GAME_CONFIG.TURN_SPEED * (this.speed / GAME_CONFIG.MAX_SPEED);
+                this.angle += GAME_CONFIG.TURN_SPEED * (this.speed / GAME_CONFIG.MAX_SPEED) * dt;
             }
         }
         
-        // Update position
-        this.x += Math.cos(this.angle) * this.speed;
-        this.y += Math.sin(this.angle) * this.speed;
+        // Update position (frame-rate independent)
+        this.x += Math.cos(this.angle) * this.speed * dt;
+        this.y += Math.sin(this.angle) * this.speed * dt;
         
         // Keep car in bounds
         this.x = Math.max(20, Math.min(GAME_CONFIG.WIDTH - 20, this.x));
@@ -427,8 +430,6 @@ function render() {
     // Draw game state overlays
     if (gameState === 'waiting') {
         drawWaitingOverlay();
-    } else if (gameState === 'countdown') {
-        // Countdown handled separately
     } else if (gameState === 'dnf') {
         drawDNFOverlay();
     }
@@ -513,25 +514,16 @@ function startRace() {
     // Initialize car at start position
     car = new Car(START_POSITION.x, START_POSITION.y, START_POSITION.angle);
     
-    // Start countdown
-    gameState = 'countdown';
-    let count = 3;
+    // Start racing immediately
+    gameState = 'racing';
+    lapStartTime = performance.now();
+    timer = 0;
     
-    const countdownInterval = setInterval(() => {
-        showMessage(count > 0 ? count.toString() : 'GO!', count > 0 ? '#ffffff' : '#00ff88');
-        
-        if (count <= 0) {
-            clearInterval(countdownInterval);
-            gameState = 'racing';
-            lapStartTime = performance.now();
-            timer = 0;
-            
-            setTimeout(() => {
-                hideMessage();
-            }, 500);
-        }
-        count--;
-    }, 1000);
+    // Brief "GO!" message
+    showMessage('GO!', '#00ff88');
+    setTimeout(() => {
+        hideMessage();
+    }, 500);
 }
 
 function completeLap() {
