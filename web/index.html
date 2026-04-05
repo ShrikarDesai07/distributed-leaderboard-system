@@ -9,25 +9,26 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="title">HOTLAP DAILY</h1>
-            <p class="subtitle">go flatout to set today's laptime</p>
-            <div class="connection-status" id="connectionStatus">
-                <span class="status-dot disconnected"></span>
-                <span class="status-text">Connecting...</span>
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-brand">HOTLAP</div>
+            <div class="navbar-right">
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot disconnected"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
             </div>
-        </header>
-
+        </nav>
+        
         <!-- Main Content -->
         <main class="main-content">
             <!-- Left Panel - Controls -->
             <div class="left-panel">
                 <div class="control-panel">
-                    <!-- Name Input -->
-                    <div class="input-group">
-                        <label for="playerName">NAME</label>
-                        <input type="text" id="playerName" placeholder="Enter your name" maxlength="15">
+                    <!-- Player Display -->
+                    <div class="player-display">
+                        <label>PLAYER</label>
+                        <div class="player-name" id="playerNameDisplay">Player###</div>
                     </div>
 
                     <!-- Team Selection -->
@@ -54,29 +55,31 @@
                             <span class="key-label">LEFT</span>
                         </div>
                         <div class="control-key">
-                            <span class="key">&#8593;</span>
-                            <span class="key-label">GAS</span>
-                        </div>
-                        <div class="control-key">
                             <span class="key">&#8594;</span>
                             <span class="key-label">RIGHT</span>
                         </div>
                     </div>
-
-                    <!-- Best Time Display -->
-                    <div class="best-time-display" id="bestTimeDisplay">
-                        <div class="best-label">YOUR BEST</div>
-                        <div class="best-value" id="personalBest">--:--</div>
-                        <div class="previous-label">Previous: <span id="previousTime">--:--</span></div>
-                    </div>
+                    <div class="auto-gas-note">Auto Gas</div>
                 </div>
             </div>
 
             <!-- Center - Game Canvas -->
             <div class="center-panel">
                 <div class="game-container">
+                    <div class="top-bar">
+                        <div class="current-time" id="timerDisplay">0.000</div>
+                        <div class="best-times">
+                            <div class="time-item">
+                                <span class="time-label">BEST</span>
+                                <span class="time-value" id="personalBest">--:--</span>
+                            </div>
+                            <div class="time-item">
+                                <span class="time-label">PREV</span>
+                                <span class="time-value" id="previousTime">--:--</span>
+                            </div>
+                        </div>
+                    </div>
                     <canvas id="gameCanvas" width="600" height="500"></canvas>
-                    <div class="timer-display" id="timerDisplay">0.000</div>
                     <div class="lap-message" id="lapMessage"></div>
                 </div>
             </div>
@@ -96,17 +99,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-info">
-                <span>Computer Networks Mini Project</span>
-                <span class="separator">|</span>
-                <span>TCP + WebSocket</span>
-                <span class="separator">|</span>
-                <span id="clientCount">Clients: 0</span>
-            </div>
-        </footer>
     </div>
 
     <!-- Scripts -->

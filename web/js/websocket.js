@@ -102,6 +102,10 @@ function handleMessage(event) {
             case 'welcome':
                 console.log('[WS] Welcome message received');
                 break;
+            
+            case 'client_count':
+                updateClientCount(data.count);
+                break;
                 
             default:
                 console.log('[WS] Unknown message type:', data.type);
@@ -118,6 +122,9 @@ function handleMessage(event) {
 function handleLeaderboardUpdate(leaderboardData) {
     console.log('[WS] Leaderboard update:', leaderboardData.length, 'entries');
     
+    // Update client count from leaderboard size
+    updateClientCount(leaderboardData.length);
+    
     // Call the leaderboard update callback
     if (onLeaderboardUpdate) {
         onLeaderboardUpdate(leaderboardData);
@@ -126,6 +133,16 @@ function handleLeaderboardUpdate(leaderboardData) {
     // Also update via global function if available
     if (typeof updateLeaderboardDisplay === 'function') {
         updateLeaderboardDisplay(leaderboardData);
+    }
+}
+
+/**
+ * Update the client count display
+ */
+function updateClientCount(count) {
+    const clientCountEl = document.getElementById('clientCount');
+    if (clientCountEl) {
+        clientCountEl.textContent = `Clients: ${count}`;
     }
 }
 

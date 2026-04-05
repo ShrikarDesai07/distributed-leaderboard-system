@@ -36,6 +36,8 @@ const GAME_CONFIG = {
     TRACK_BORDER: '#2a2a3a',
     GRASS_COLOR: '#1a1a2a',
     FINISH_LINE_WIDTH: 40,
+    FINISH_LINE_OFFSET: 30, // Safely within the pure vertical straight
+    FINISH_ZONE_DEPTH: 18,
     
     // Car
     CAR_WIDTH: 16,
@@ -112,19 +114,79 @@ const TRACK_POINTS = [
     { x: 480, y: 420 }
 ];
 
-const TRACK_WIDTH = 55;
+const TRACK_WIDTH = 65; // Made track wider
 
-// Finish line position (horizontal line on the right side)
-const FINISH_LINE = {
-    x1: 455,  // left edge
-    x2: 505,  // right edge
-    y: 420    // y position
+// Team Colors mapping
+const TEAM_COLORS = {
+    'Red Racing': '#e32636',
+    'Silver Arrows': '#d3d3d3',
+    'Blue Bulls': '#1f4287',
+    'Green Machine': '#009e60',
+    'Orange Army': '#ff8c00'
 };
+
+function getFinishLineSegment() {
+    const p1 = TRACK_POINTS[0];
+    const p2 = TRACK_POINTS[1];
+
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+
+    const len = Math.hypot(dx, dy);
+    const nx = dx / len;
+    const ny = dy / len;
+
+    const px = -ny;
+    const py = nx;
+
+    // Move the finish line slightly up the straight to reduce edge-case DNFs
+    // when crossing near the bottom-right corner.
+    const anchorX = p1.x + nx * GAME_CONFIG.FINISH_LINE_OFFSET;
+    const anchorY = p1.y + ny * GAME_CONFIG.FINISH_LINE_OFFSET;
+
+    const halfWidth = TRACK_WIDTH / 2;
+
+    return {
+        x1: anchorX - px * halfWidth,
+        y1: anchorY - py * halfWidth,
+        x2: anchorX + px * halfWidth,
+        y2: anchorY + py * halfWidth
+    };
+}
+
+function getFinishZone() {
+    const p1 = TRACK_POINTS[0];
+    const p2 = TRACK_POINTS[1];
+
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    const nx = dx / len;
+    const ny = dy / len;
+
+    // Axis across the track (left-right relative to travel direction)
+    const ax = -ny;
+    const ay = nx;
+
+    // Shift zone upward from the corner to keep crossings on-track.
+    const centerX = p1.x + nx * GAME_CONFIG.FINISH_LINE_OFFSET;
+    const centerY = p1.y + ny * GAME_CONFIG.FINISH_LINE_OFFSET;
+
+    return {
+        centerX,
+        centerY,
+        axisX: { x: ax, y: ay },
+        axisY: { x: nx, y: ny },
+        halfWidth: TRACK_WIDTH / 2,
+        halfDepth: GAME_CONFIG.FINISH_ZONE_DEPTH / 2
+    };
+}
+
 
 // Starting position (just before finish line, facing UP)
 const START_POSITION = {
     x: 480,
-    y: 440,
+    y: 410, // Must be strictly greater than finish line Y (390) so it starts behind it
     angle: -Math.PI / 2  // Facing UP (north)
 };
 
@@ -138,7 +200,7 @@ class Car {
         this.y = y;
         this.angle = angle;
         this.speed = 0;
-        this.color = GAME_CONFIG.CAR_COLORS[Math.floor(Math.random() * GAME_CONFIG.CAR_COLORS.length)];
+        this.color = TEAM_COLORS['Red Racing']; // Default, gets updated in startRace()
         this.width = GAME_CONFIG.CAR_WIDTH;
         this.height = GAME_CONFIG.CAR_HEIGHT;
         this.crossedFinish = false;
@@ -149,12 +211,8 @@ class Car {
         // Frame-rate independent multiplier (normalize to 60 FPS)
         const dt = deltaTime * 60;
         
-        // Handle acceleration
-        if (keys.up) {
-            this.speed += GAME_CONFIG.ACCELERATION * dt;
-        } else {
-            this.speed -= GAME_CONFIG.DECELERATION * dt;
-        }
+        // Auto-acceleration (always gas)
+        this.speed += GAME_CONFIG.ACCELERATION * dt;
         
         // Apply friction
         this.speed -= GAME_CONFIG.FRICTION * dt;
@@ -180,9 +238,13 @@ class Car {
         this.x = Math.max(20, Math.min(GAME_CONFIG.WIDTH - 20, this.x));
         this.y = Math.max(20, Math.min(GAME_CONFIG.HEIGHT - 20, this.y));
         
-        // Track if car has moved away from start area
-        if (!this.hasStartedLap && this.y < 400) {
-            this.hasStartedLap = true;
+        // Track if car has moved away from start area (must go far away before lap counts)
+        if (!this.hasStartedLap) {
+            const start = TRACK_POINTS[0];
+            const distFromStart = Math.hypot(this.x - start.x, this.y - start.y);
+            if (distFromStart > 200) { // Require driving substantially far away from start first
+                this.hasStartedLap = true;
+            }
         }
         
         // Check track boundaries - DNF if off track
@@ -194,35 +256,86 @@ class Car {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle + Math.PI / 2);
         
-        // Car body
+        const hw = this.width / 2;
+        const hh = this.height / 2;
+        
+        // Tires (dark grey)
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-hw - 1, -hh + 3, 3, 7);   // Front left
+        ctx.fillRect(hw - 2, -hh + 3, 3, 7);    // Front right
+        ctx.fillRect(-hw - 1, hh - 9, 3, 8);    // Rear left
+        ctx.fillRect(hw - 2, hh - 9, 3, 8);     // Rear right
+        
+        // Front Wing
         ctx.fillStyle = this.color;
-        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.fillRect(-hw + 1, -hh - 1, this.width - 2, 3);
+        ctx.fillStyle = '#111'; // tiny wing detail
+        ctx.fillRect(-hw + 1, -hh - 1, this.width - 2, 1);
         
-        // Windshield (front of car)
-        ctx.fillStyle = '#1a1a2a';
-        ctx.fillRect(-this.width / 2 + 2, -this.height / 2 + 3, this.width - 4, 8);
+        // Nose Cone
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.moveTo(-2, -hh + 2);
+        ctx.lineTo(2, -hh + 2);
+        ctx.lineTo(3, -1);
+        ctx.lineTo(-3, -1);
+        ctx.fill();
         
-        // Racing stripe
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-1.5, -this.height / 2, 3, this.height);
+        // Sidepods & Main Body
+        ctx.fillRect(-hw + 2, -1, this.width - 4, hh + 2);
+        
+        // Rear Wing
+        ctx.fillRect(-hw + 1, hh + 1, this.width - 2, 3);
+        ctx.fillStyle = '#111'; // tiny wing detail
+        ctx.fillRect(-hw + 1, hh + 3, this.width - 2, 1);
+        
+        // Driver / Cockpit area
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(0, 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Subtle highlight line down the middle
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(-0.5, -hh + 4, 1, hh - 2);
         
         ctx.restore();
     }
     
     isOnTrack() {
-        // Simple distance check to track center line
-        let minDist = Infinity;
+        const halfCarWidth = this.width / 2;
+        const halfCarHeight = this.height / 2;
         
-        for (let i = 0; i < TRACK_POINTS.length - 1; i++) {
-            const dist = this.distToSegment(
-                this.x, this.y,
-                TRACK_POINTS[i].x, TRACK_POINTS[i].y,
-                TRACK_POINTS[i + 1].x, TRACK_POINTS[i + 1].y
-            );
-            minDist = Math.min(minDist, dist);
+        const carCorners = [
+            [-halfCarWidth, -halfCarHeight],
+            [halfCarWidth, -halfCarHeight],
+            [halfCarWidth, halfCarHeight],
+            [-halfCarWidth, halfCarHeight]
+        ];
+
+        // Check if all 4 corners of the car are on the track
+        for (const [offsetX, offsetY] of carCorners) {
+            const worldX = this.x + offsetX * Math.cos(this.angle) - offsetY * Math.sin(this.angle);
+            const worldY = this.y + offsetX * Math.sin(this.angle) + offsetY * Math.cos(this.angle);
+
+            let minDist = Infinity;
+            for (let i = 0; i < TRACK_POINTS.length - 1; i++) {
+                const dist = this.distToSegment(
+                    worldX, worldY,
+                    TRACK_POINTS[i].x, TRACK_POINTS[i].y,
+                    TRACK_POINTS[i + 1].x, TRACK_POINTS[i + 1].y
+                );
+                minDist = Math.min(minDist, dist);
+            }
+            
+            // Allow a small 'curb' tolerance (about half a car's width)
+            // so drivers can take the inside line more aggressively
+            if (minDist > (TRACK_WIDTH / 2) + 8) {
+                return false;
+            }
         }
         
-        return minDist < TRACK_WIDTH / 2;
+        return true;
     }
     
     distToSegment(px, py, x1, y1, x2, y2) {
@@ -238,23 +351,64 @@ class Car {
         return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
     }
     
+    
     checkFinishLine() {
-        // Check if car crossed finish line (horizontal line)
-        const nearFinish = this.x > FINISH_LINE.x1 && 
-                          this.x < FINISH_LINE.x2 && 
-                          Math.abs(this.y - FINISH_LINE.y) < 20;
-        
-        // Must be going upward (negative y direction) and have completed lap
-        const goingUp = Math.sin(this.angle) < -0.3;
-        
-        if (nearFinish && !this.crossedFinish && this.speed > 0.5 && goingUp && this.hasStartedLap) {
+        const touchingFinish = this.isTouchingFinishLine();
+
+        if (touchingFinish && !this.crossedFinish && this.hasStartedLap) {
             this.crossedFinish = true;
             return true;
-        } else if (!nearFinish) {
+        }
+
+        if (!touchingFinish) {
             this.crossedFinish = false;
         }
-        
+
         return false;
+    }
+
+    isTouchingFinishLine() {
+        const zone = getFinishZone();
+        const halfZoneWidth = zone.halfWidth;
+        const halfZoneDepth = zone.halfDepth;
+        
+        // Car corners in local/body space
+        const halfCarWidth = this.width / 2;
+        const halfCarHeight = this.height / 2;
+        const carCorners = [
+            [-halfCarWidth, -halfCarHeight],
+            [halfCarWidth, -halfCarHeight],
+            [halfCarWidth, halfCarHeight],
+            [-halfCarWidth, halfCarHeight]
+        ];
+
+        // Transform car corners to zone-local space and find bounding box
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        carCorners.forEach(([offsetX, offsetY]) => {
+            // Transform to world coordinates
+            const worldX = this.x + offsetX * Math.cos(this.angle) - offsetY * Math.sin(this.angle);
+            const worldY = this.y + offsetX * Math.sin(this.angle) + offsetY * Math.cos(this.angle);
+
+            // Transform to zone-local coordinates
+            const dx = worldX - zone.centerX;
+            const dy = worldY - zone.centerY;
+            const zoneLocalX = dx * zone.axisX.x + dy * zone.axisX.y;
+            const zoneLocalY = dx * zone.axisY.x + dy * zone.axisY.y;
+
+            minX = Math.min(minX, zoneLocalX);
+            maxX = Math.max(maxX, zoneLocalX);
+            minY = Math.min(minY, zoneLocalY);
+            maxY = Math.max(maxY, zoneLocalY);
+        });
+
+        // Check if car's bounding box overlaps with finish zone
+        // Using AABB (Axis-Aligned Bounding Box) overlap test
+        return !(maxX + 2 < -halfZoneWidth || 
+                 minX - 2 > halfZoneWidth || 
+                 maxY + 2 < -halfZoneDepth || 
+                 minY - 2 > halfZoneDepth);
     }
     
     reset() {
@@ -315,6 +469,17 @@ function drawTrack(ctx) {
         ctx.lineTo(TRACK_POINTS[i].x, TRACK_POINTS[i].y);
     }
     ctx.stroke();
+
+    // 🔥 INNER TRACK HIGHLIGHT (fixed version)
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = TRACK_WIDTH - 12; // Much thinner dark bands on the edges
+    
+    ctx.beginPath();
+    ctx.moveTo(TRACK_POINTS[0].x, TRACK_POINTS[0].y);
+    for (let i = 1; i < TRACK_POINTS.length; i++) {
+        ctx.lineTo(TRACK_POINTS[i].x, TRACK_POINTS[i].y);
+    }
+    ctx.stroke();
     
     // Draw finish line
     drawFinishLine(ctx);
@@ -324,27 +489,32 @@ function drawTrack(ctx) {
 }
 
 function drawFinishLine(ctx) {
-    const x1 = FINISH_LINE.x1;
-    const x2 = FINISH_LINE.x2;
-    const y = FINISH_LINE.y;
-    const height = 30;
+    const zone = getFinishZone();
+    const zoneWidth = zone.halfWidth * 2;
+    const zoneDepth = zone.halfDepth * 2;
+    const angle = Math.atan2(zone.axisX.y, zone.axisX.x);
     
-    // Checkered pattern (horizontal finish line)
+    ctx.save();
+    ctx.translate(zone.centerX, zone.centerY);
+    ctx.rotate(angle);
+
     const squareSize = 8;
-    const numSquaresX = Math.floor((x2 - x1) / squareSize);
-    const numSquaresY = Math.floor(height / squareSize);
-    
-    for (let i = 0; i < numSquaresX; i++) {
-        for (let j = 0; j < numSquaresY; j++) {
+    const cols = Math.max(1, Math.floor(zoneWidth / squareSize));
+    const rows = Math.max(1, Math.ceil(zoneDepth / squareSize));
+
+    for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
             ctx.fillStyle = (i + j) % 2 === 0 ? '#ffffff' : '#000000';
             ctx.fillRect(
-                x1 + i * squareSize,
-                y - height / 2 + j * squareSize,
+                -zoneWidth / 2 + i * squareSize,
+                -zoneDepth / 2 + j * squareSize,
                 squareSize,
                 squareSize
             );
         }
     }
+
+    ctx.restore();
 }
 
 function drawTrackArrows(ctx) {
@@ -399,18 +569,23 @@ function update(deltaTime) {
         timer = (performance.now() - lapStartTime) / 1000;
         updateTimerDisplay();
         
+        // Let finish-line contact win over the off-track check.
+        if (car.checkFinishLine()) {
+            completeLap();
+            return;
+        }
+
         // Update car and check if on track
         const onTrack = car.update(deltaTime);
         
         // DNF if off track
         if (!onTrack) {
+            if (car.checkFinishLine()) {
+                completeLap();
+                return;
+            }
             triggerDNF();
             return;
-        }
-        
-        // Check finish line
-        if (car.checkFinishLine()) {
-            completeLap();
         }
     }
 }
@@ -450,8 +625,8 @@ function drawWaitingOverlay() {
 }
 
 function drawDNFOverlay() {
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    // Semi-transparent overlay to help text pop
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.fillRect(0, 0, GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT);
     
     // DNF text
@@ -482,9 +657,6 @@ function triggerDNF() {
         timerEl.textContent = timer.toFixed(3) + ' (DNF)';
         timerEl.style.color = '#ff3366';
     }
-    
-    // Show DNF message
-    showMessage('DNF', '#ff3366');
 }
 
 function startRace() {
@@ -513,6 +685,12 @@ function startRace() {
     
     // Initialize car at start position
     car = new Car(START_POSITION.x, START_POSITION.y, START_POSITION.angle);
+    
+    // Set the car color based on selected team
+    const teamSelect = document.getElementById('teamSelect');
+    if (teamSelect && TEAM_COLORS[teamSelect.value]) {
+        car.color = TEAM_COLORS[teamSelect.value];
+    }
     
     // Start racing immediately
     gameState = 'racing';
@@ -584,18 +762,22 @@ function hideMessage() {
 function handleKeyDown(e) {
     switch (e.code) {
         case 'ArrowLeft':
+        case 'KeyA':
             keys.left = true;
             e.preventDefault();
             break;
         case 'ArrowRight':
+        case 'KeyD':
             keys.right = true;
             e.preventDefault();
             break;
         case 'ArrowUp':
+        case 'KeyW':
             keys.up = true;
             e.preventDefault();
             break;
         case 'ArrowDown':
+        case 'KeyS':
             keys.down = true;
             e.preventDefault();
             break;
@@ -611,15 +793,19 @@ function handleKeyDown(e) {
 function handleKeyUp(e) {
     switch (e.code) {
         case 'ArrowLeft':
+        case 'KeyA':
             keys.left = false;
             break;
         case 'ArrowRight':
+        case 'KeyD':
             keys.right = false;
             break;
         case 'ArrowUp':
+        case 'KeyW':
             keys.up = false;
             break;
         case 'ArrowDown':
+        case 'KeyS':
             keys.down = false;
             break;
     }
