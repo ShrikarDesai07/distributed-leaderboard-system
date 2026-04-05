@@ -2,7 +2,7 @@
 
 ## Distributed Real-Time Leaderboard System
 
-This document explains all the Computer Networks concepts demonstrated in this project, designed to help you prepare for your viva/presentation.
+This document explains all the Computer Networks concepts demonstrated in this project.
 
 ---
 
@@ -17,7 +17,8 @@ This document explains all the Computer Networks concepts demonstrated in this p
 7. [WebSocket Protocol](#7-websocket-protocol)
 8. [LAN Communication](#8-lan-communication)
 9. [Code References](#9-code-references)
-10. [Viva Questions & Answers](#10-viva-questions--answers)
+10. [Scalability & Load Testing (Asyncio)](#10-scalability--load-testing-asyncio)
+11. [Questions & Answers](#11-questions--answers)
 
 ---
 
@@ -502,7 +503,30 @@ http://192.168.137.1:8080
 
 ---
 
-## 10. Viva Questions & Answers
+## 10. Scalability & Load Testing (Asyncio)
+
+### Why Test Server Scalability?
+To prove our server implementation can handle real-world scenarios, we created `load_test.py` to bombard the server with simultaneous connections, generating traffic bursts to measure its breaking point. This tests to ensure the CN concepts like connection acceptance rates and thread scaling run correctly in an OS environment.
+
+### Asyncio vs Multithreading
+
+Our project cleverly contrasts two different models of handling concurrent network connections:
+
+| Location | Model | How it Works | Pros / Cons |
+|----------|-------|--------------|-------------|
+| **Server** (`main.py`) | **Multithreading** (Thread-per-client) | The OS allocates an entire thread memory space for each connected user. Blocking `recv()` calls merely sleep the thread. | (+) Easy to write/read.<br>(-) Hard caps easily due to OS thread context switching overhead (e.g., 500-1000 users). |
+| **Load Tester** (`load_test.py`) | **Asyncio** (Event Loop / Non-Blocking I/O) | Uses a single thread running an "Event Loop" that rapidly polls multiple non-blocking sockets. If a socket is waiting for data, the CPU instantly switches to another socket without an OS context switch. | (+) Extremely lightweight.<br>(-) Harder to write code (needs `async` / `await`). |
+
+By writing the load tester in `asyncio`, we can efficiently simulate 100+ concurrent players pushing TCP traffic to the backend entirely from one script, without exhausting the laptop's CPU with 100 separate thread processes!
+
+### High-Performance Databases (Redis)
+Whenever clients send new lap times to the WebSocket or TCP socket, the network backend needs to query and resort the entire leaderboard. If done using regular Python arrays, resorting 100 players would be extremely slow (`O(N log N)`) and block the networking event loop for other players attempting to broadcast.
+
+Instead, we pipe the data natively via network socket to **Redis**, utilizing the **Sorted Sets** data type. Using `ZADD`, the network backend modifies rankings in `O(log N)` time. Using `-ZREMRANGEBYRANK`, we can instantly flush old leaderboard scores. This prevents our network broadcast queue from lagging when 100 players update at the same time.
+
+---
+
+## 11. Questions & Answers
 
 ### Basic Questions
 
@@ -548,7 +572,10 @@ A: When a score is received:
 5. Handle any failed sends (remove dead clients)
 
 **Q: What's the difference between blocking and non-blocking I/O?**
-A: Blocking I/O (like `socket.recv()`) pauses the thread until data arrives. Non-blocking allows the program to continue and check later. We use blocking I/O in separate threads to simulate non-blocking behavior.
+A: Blocking I/O (like `socket.recv()`) pauses the thread until data arrives. Non-blocking allows the program to continue and check later. We use blocking I/O in separate threads for the server, but we use non-blocking `asyncio` streams in `load_test.py` to efficiently generate 100+ concurrent clients without OS thread limits.
+
+**Q: How do you handle leaderboard scalability?**
+A: Instead of slow array sorts inside the Python network thread, we offload all ranking logic to Redis using **Sorted Sets**. We use `ZADD` (add scores) and `ZRANGE` (retrieve top 100), allowing our server to broadcast rankings instantly at `O(log N)` speeds without blocking other client traffic.
 
 ---
 

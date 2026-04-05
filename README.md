@@ -4,11 +4,15 @@ A real-time distributed leaderboard system inspired by [HotlapDaily.com](https:/
 
 ## Features
 
-- **Real-time leaderboard updates** across all connected clients
+- **Real-time leaderboard updates** across all connected clients (now scales up to top 100 players!)
+- **Advanced 2D Racing Physics**: HTML5 Canvas game with AABB rectangle collision, auto-gas/WASD controls, and track curb leniency.
+- **Persistent Player Identities**: Uses `localStorage` to remember racer names seamlessly across sessions.
+- **F1-Style Visuals**: Color-coded cars mapping to constructor choices with accurate track highlighting.
 - **Dual protocol support**: TCP (terminal) + WebSocket (browser)
-- **Web-based racing game** with live leaderboard
 - **Concurrent client handling** using multithreading
 - **Redis-powered** high-performance ranking system
+- **High-Performance Load Testing**: Included `asyncio` load tester (`load_test.py`) simulating realistic burst traffic, personal bests, and unexpected disconnects to verify backend stability.
+- **ANSI Color-Coded Terminal Logs**: Real-time traffic monitoring distinctly color-coded by protocol (TCP vs WS) and event type.
 - **LAN demo ready** for multi-device presentations
 
 ## Quick Start
@@ -113,7 +117,7 @@ distributed-leaderboard-system/
 │       └── leaderboard.js  # Leaderboard display
 │
 ├── docs/
-│   └── CN_CONCEPTS.md      # Viva documentation
+│   └── CN_CONCEPTS.md      # documentation
 │
 └── legacy/                 # Original files (for reference)
     ├── server.py
@@ -156,6 +160,23 @@ Connect to the hotspot, then:
 python client.py 192.168.137.1
 ```
 
+## Troubleshooting & Maintenance
+
+### Wipe the Leaderboard (Redis)
+If you want to clear the entire leaderboard (perhaps during testing or after a heavy load-testing session), run the following command in your `redis-cli`:
+
+```bash
+redis-cli ZREMRANGEBYRANK leaderboard 0 -1
+```
+This efficiently removes all elements in the 'leaderboard' Sorted Set from rank 0 to -1 (the end).
+
+### Running a Stress Test
+To run a simulated load against your server, launch the load tester in a separate terminal:
+```bash
+python load_test.py
+```
+This will launch 100 concurrent asynchronous clients that simulate realistic tracking, personal best updates, and random network turbulence, while outputting beautifully color-coded ANSI metrics!
+
 ## Technologies Used
 
 | Component | Technology |
@@ -178,27 +199,10 @@ The server provides detailed logging for demo purposes:
 [10:23:50] [--> ] Broadcasting to 2 clients (TCP: 1, WS: 1)
 ```
 
-## Game Controls
-
-| Key | Action |
-|-----|--------|
-| ↑ (Up Arrow) | Accelerate |
-| ← (Left Arrow) | Turn left |
-| → (Right Arrow) | Turn right |
-| Space | Start race |
-
-## Future Improvements
-
-- [ ] Redis Pub/Sub for push notifications
-- [ ] Player authentication
-- [ ] Historical lap records
-- [ ] Multiple track support
-- [ ] Replay system
-
 ## Documentation
 
 For detailed explanation of Computer Networks concepts, see:
-- [docs/CN_CONCEPTS.md](docs/CN_CONCEPTS.md) - Viva preparation guide
+- [docs/CN_CONCEPTS.md](docs/CN_CONCEPTS.md)
 
 ## Authors
 

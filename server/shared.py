@@ -43,35 +43,54 @@ def get_full_timestamp() -> str:
     """Get full timestamp in YYYY-MM-DD HH:MM:SS format"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+# ANSI Color Codes for terminal logging
+COLORS = {
+    "TCP": "\033[96m",   # Cyan
+    "WS": "\033[95m",    # Magenta
+    "-->": "\033[93m",   # Yellow (Broadcasts)
+    "INFO": "\033[92m",  # Green
+    "ERR": "\033[91m",   # Red
+    "RESET": "\033[0m"   # Reset formatting
+}
+
 def log(log_type: str, message: str) -> None:
     """
     Log a message with timestamp and type
-    
+
     Args:
         log_type: Type of log (TCP, WS, -->, INFO, ERR)
         message: Log message
     """
     timestamp = get_timestamp()
-    print(f"[{timestamp}] [{log_type:4}] {message}")
+    
+    # Check if the log type has a specific color mapping, otherwise default to no color
+    color = COLORS.get(log_type.strip(), "")
+    reset = COLORS["RESET"] if color else ""
+    
+    print(f"{color}[{timestamp}] [{log_type:4}] {message}{reset}")
 
 def log_header() -> None:
     """Print server startup header"""
-    print("=" * 65)
-    print("           DISTRIBUTED LEADERBOARD SERVER")
-    print("=" * 65)
+    c = COLORS["INFO"]
+    r = COLORS["RESET"]
+    print(f"{c}" + "=" * 65)
+    print(f"{c}           DISTRIBUTED LEADERBOARD SERVER")
+    print(f"{c}" + "=" * 65 + f"{r}")
 
-def log_server_info(tcp_port: int, ws_port: int, http_port: int) -> None:
+def log_server_info(tcp_port: int, ws_port: int, http_port: int) -> None:       
     """Print server connection information"""
     from config import HOST, REDIS_HOST, REDIS_PORT
-    
-    print(f"[{get_timestamp()}] Server started")
-    print(f"[{get_timestamp()}] TCP Server:       {HOST}:{tcp_port}")
-    print(f"[{get_timestamp()}] WebSocket Server: {HOST}:{ws_port}")
+
+    c = COLORS["INFO"]
+    r = COLORS["RESET"]
+    print(f"{c}[{get_timestamp()}] Server started{r}")
+    print(f"[{get_timestamp()}] {COLORS['TCP']}TCP Server:{r}       {HOST}:{tcp_port}")
+    print(f"[{get_timestamp()}] {COLORS['WS']}WebSocket Server:{r} {HOST}:{ws_port}")
     print(f"[{get_timestamp()}] HTTP Server:      {HOST}:{http_port}")
-    print(f"[{get_timestamp()}] Redis:            {REDIS_HOST}:{REDIS_PORT}")
-    print("-" * 65)
-    print(f"[{get_timestamp()}] Waiting for connections...")
-    print("-" * 65)
+    print(f"[{get_timestamp()}] Redis:            {REDIS_HOST}:{REDIS_PORT}")   
+    print(f"{c}" + "-" * 65 + f"{r}")
+    print(f"{c}[{get_timestamp()}] Waiting for connections...{r}")
+    print(f"{c}" + "-" * 65 + f"{r}")
 
 # =============================================================================
 # CLIENT MANAGEMENT

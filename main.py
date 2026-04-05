@@ -121,12 +121,12 @@ def main():
     log_header()
     
     # Test Redis connection
-    print(f"[INFO] Testing Redis connection...")
+    print("\033[94m[INFO] Testing Redis connection...\033[0m")
     if not test_connection():
-        print("[ERROR] Could not connect to Redis!")
-        print("[ERROR] Make sure Redis server is running (redis-server)")
+        print("\033[91m[ERROR] Could not connect to Redis!\033[0m")
+        print("\033[91m[ERROR] Make sure Redis server is running (redis-server)\033[0m")
         sys.exit(1)
-    print(f"[INFO] Redis connection OK")
+    print("\033[92m[INFO] Redis connection OK\033[0m")
     print()
     
     # Print server info
@@ -159,10 +159,9 @@ def main():
     except KeyboardInterrupt:
         print()
         log("INFO", "Shutting down servers...")
-        print()
-        print("=" * 65)
+        print("\033[91m\n" + "=" * 65)
         print("              SERVER STOPPED")
-        print("=" * 65)
+        print("=" * 65 + "\033[0m")
 
 # =============================================================================
 # ENTRY POINT

@@ -662,13 +662,12 @@ function triggerDNF() {
 function startRace() {
     if (gameState !== 'waiting' && gameState !== 'dnf') return;
     
-    // Get player name
-    const nameInput = document.getElementById('playerName');
-    playerName = nameInput ? nameInput.value.trim() : '';
-    
+    // Ensure we have a player name loaded
     if (!playerName) {
-        playerName = 'Player' + Math.floor(Math.random() * 1000);
-        if (nameInput) nameInput.value = playerName;
+        playerName = localStorage.getItem('hotlapPlayerName') || 'Player' + Math.floor(Math.random() * 10000);
+        localStorage.setItem('hotlapPlayerName', playerName);
+        const nameDisplay = document.getElementById('playerNameDisplay');
+        if (nameDisplay) nameDisplay.textContent = playerName;
     }
     
     // Update leaderboard module
@@ -842,14 +841,23 @@ function initGame() {
         startBtn.addEventListener('click', startRace);
     }
     
-    // Name input handler
-    const nameInput = document.getElementById('playerName');
-    if (nameInput) {
-        nameInput.addEventListener('change', () => {
-            playerName = nameInput.value.trim();
-            setCurrentPlayer(playerName);
-        });
+    // Automatically assign or retrieve unique player name via localStorage
+    let storedName = localStorage.getItem('hotlapPlayerName');
+    if (!storedName) {
+        // Generate a random unique tag if not exists
+        storedName = 'Player' + Math.floor(Math.random() * 10000);
+        localStorage.setItem('hotlapPlayerName', storedName);
     }
+    playerName = storedName;
+    
+    // Update the UI
+    const nameDisplay = document.getElementById('playerNameDisplay');
+    if (nameDisplay) {
+        nameDisplay.textContent = playerName;
+    }
+    
+    // Send to leaderboard tracking
+    setCurrentPlayer(playerName);
     
     // Start game loop
     lastTime = performance.now();
