@@ -74,7 +74,24 @@ function handleOpen(event) {
     updateConnectionStatus('connected');
     
     // Send hello message with hostname
-    const hostname = `Browser-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    // Persist hostname in localStorage so a browser keeps the same id across reloads
+    let hostname = null;
+    try {
+        hostname = localStorage.getItem('clientHostname');
+    } catch (e) {
+        // localStorage may be unavailable in some contexts; fall back to ephemeral id
+        hostname = null;
+    }
+
+    if (!hostname) {
+        hostname = `Browser-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        try {
+            localStorage.setItem('clientHostname', hostname);
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
     sendMessage({
         type: 'hello',
         hostname: hostname
